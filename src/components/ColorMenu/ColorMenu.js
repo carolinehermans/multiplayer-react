@@ -1,5 +1,6 @@
 import './ColorMenu.css';
 import COLORS from '../../colors';
+import { useEffect } from 'react';
 
 function ColorMenu({ currColorIdx, setCurrColorIdx }) {
   return (
@@ -8,6 +9,7 @@ function ColorMenu({ currColorIdx, setCurrColorIdx }) {
         return (
           <div
             key={i}
+            id={`color-${i}`}
             className={`color active-${i === currColorIdx}`}
             style={{ backgroundColor: color }}
             onClick={() => setCurrColorIdx(i)}

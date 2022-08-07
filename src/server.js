@@ -3,11 +3,21 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 7071 });
 const clients = new Map();
 
+const COLORS = [
+  '#ffca38',
+  '#74d675',
+  '#b584d1',
+  '#e07097',
+  '#69b5e0',
+  '#cc7435',
+];
+
+let ctr = 0;
 wss.on('connection', (ws) => {
   const id = uuidv4();
-  const color = Math.floor(Math.random() * 360);
+  const color = COLORS[ctr % COLORS.length];
   const metadata = { id, color };
-
+  ctr++;
   clients.set(ws, metadata);
 
   ws.on('message', (messageAsString) => {
@@ -20,6 +30,8 @@ wss.on('connection', (ws) => {
     [...clients.keys()].forEach((client) => {
       client.send(JSON.stringify(message));
     });
+
+    console.log(message);
   });
 
   wss.on('close', () => {

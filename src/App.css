@@ -10,6 +10,15 @@
   overflow: hidden;
 }
 
+img {
+  user-drag: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
 #box {
   position: relative;
   background-color: rgb(255, 217, 226);
@@ -25,4 +34,10 @@
   left: 0;
   top: 0;
   position: absolute;
+}
+
+.cursor {
+  position: absolute;
+  top: 0;
+  left: 0 ;
 }

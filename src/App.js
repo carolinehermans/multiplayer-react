@@ -33,11 +33,13 @@ function App() {
         const messageBody = JSON.parse(webSocketMessage.data);
         let cursor = document.getElementById(messageBody.sender);
         if (!cursor) cursor = makeCursor(messageBody);
-        cursor.style.transform = `translate(${messageBody.x}px, ${messageBody.y}px)`;
+        cursor.style.transform = `translate(${messageBody.x + 1}px, ${
+          messageBody.y + 1
+        }px)`;
 
         if (messageBody.hasBall) {
           ball.style.transform = `translate(${messageBody.x}px, ${messageBody.y}px)`;
-          ball.style.border = `6px solid hsl(${messageBody.color}, 50%, 50%)`;
+          ball.style.border = `6px solid ${messageBody.color}`;
         } else {
           ball.style.border = null;
         }
@@ -50,6 +52,7 @@ function App() {
           x: evt.clientX - rect.left,
           y: evt.clientY - rect.top,
           hasBall: hasBall,
+          color: COLORS[currColorIdx],
         };
         ws.send(JSON.stringify(messageBody));
       };
@@ -73,7 +76,6 @@ function App() {
           mouseY < ballY + ballSize / 2
         ) {
           hasBall = true;
-          console.log('has ball true');
         }
       };
 
@@ -89,7 +91,7 @@ function App() {
     cursor.className = 'cursor';
     cursor.id = messageBody.sender;
     cursor.innerHTML = `<svg height="16" width="16">
-        <polygon points="0,0 16,6 6,16" fill="hsl(${messageBody.color}, 50%, 50%)" stroke='#000' />
+        <polygon points="0,0 16,6 6,16" fill="${messageBody.color}" stroke='#000' />
     </svg>`;
     document.getElementById('box').appendChild(cursor);
   }
@@ -102,10 +104,6 @@ function App() {
           style={{ transform: `translate(${BOX_W / 2}px, ${BOX_H / 2}px)` }}
         ></div>
       </div>
-      <ColorMenu
-        currColorIdx={currColorIdx}
-        setCurrColorIdx={setCurrColorIdx}
-      />
     </div>
   );
 }
