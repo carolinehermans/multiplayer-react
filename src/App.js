@@ -8,15 +8,6 @@ const BOX_W = 700;
 const BOX_H = 400;
 
 function App() {
-  const [ballX, setBallX] = useState(BOX_W / 2);
-  const [ballY, setBallY] = useState(BOX_H / 2);
-
-  const [cursorX, setCursorX] = useState(null);
-  const [cursorY, setCursorY] = useState(null);
-
-  const [cursors, setCursors] = useState([]);
-  const [cursorData, setCursorData] = useState({});
-
   const [currColorIdx, setCurrColorIdx] = useState(1);
 
   async function connectToServer() {
@@ -35,21 +26,59 @@ function App() {
     async function init() {
       const ws = await connectToServer();
       const box = document.getElementById('box');
+      const ball = document.getElementById('ball');
+      const rect = box.getBoundingClientRect();
 
       ws.onmessage = (webSocketMessage) => {
         const messageBody = JSON.parse(webSocketMessage.data);
         let cursor = document.getElementById(messageBody.sender);
         if (!cursor) cursor = makeCursor(messageBody);
         cursor.style.transform = `translate(${messageBody.x}px, ${messageBody.y}px)`;
+
+        if (messageBody.hasBall) {
+          ball.style.transform = `translate(${messageBody.x}px, ${messageBody.y}px)`;
+          ball.style.border = `6px solid hsl(${messageBody.color}, 50%, 50%)`;
+        } else {
+          ball.style.border = null;
+        }
       };
 
+      let hasBall = false;
+
       document.onmousemove = (evt) => {
-        const rect = box.getBoundingClientRect();
         const messageBody = {
           x: evt.clientX - rect.left,
           y: evt.clientY - rect.top,
+          hasBall: hasBall,
         };
         ws.send(JSON.stringify(messageBody));
+      };
+
+      document.onmousedown = (evt) => {
+        const ballSize = 100;
+
+        const ballX = parseInt(
+          ball.style.transform.split('translate(').join('').split('px')[0]
+        );
+        const ballY = parseInt(
+          ball.style.transform.split('px, ')[1].split('px)')[0]
+        );
+        const mouseX = evt.clientX - rect.left;
+        const mouseY = evt.clientY - rect.top;
+
+        if (
+          mouseX > ballX - ballSize / 2 &&
+          mouseX < ballX + ballSize / 2 &&
+          mouseY > ballY - ballSize / 2 &&
+          mouseY < ballY + ballSize / 2
+        ) {
+          hasBall = true;
+          console.log('has ball true');
+        }
+      };
+
+      document.onmouseup = (evt) => {
+        hasBall = false;
       };
     }
     init();
@@ -66,13 +95,13 @@ function App() {
   }
 
   return (
-    <div
-      className="App"
-      onMouseMove={(e) => {
-        // }
-      }}
-    >
-      <div id="box" style={{ width: `${BOX_W}px`, height: `${BOX_H}px` }}></div>
+    <div className="App">
+      <div id="box" style={{ width: `${BOX_W}px`, height: `${BOX_H}px` }}>
+        <div
+          id="ball"
+          style={{ transform: `translate(${BOX_W / 2}px, ${BOX_H / 2}px)` }}
+        ></div>
+      </div>
       <ColorMenu
         currColorIdx={currColorIdx}
         setCurrColorIdx={setCurrColorIdx}
