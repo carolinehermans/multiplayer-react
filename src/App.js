@@ -6,42 +6,45 @@ import COLORS from './colors';
 
 const BOX_W = 700;
 const BOX_H = 400;
+const ws = new WebSocket('ws://localhost:7071/ws');
 
 function App() {
   const [currColorIdx, setCurrColorIdx] = useState(1);
 
-  async function connectToServer() {
-    const ws = new WebSocket('ws://localhost:7071/ws');
-    return new Promise((resolve, reject) => {
-      const timer = setInterval(() => {
-        if (ws.readyState === 1) {
-          clearInterval(timer);
-          resolve(ws);
-        }
-      }, 10);
-    });
-  }
-
   useEffect(() => {
-    async function init() {
-      const ws = await connectToServer();
+    function init() {
+      console.log('init called');
       const box = document.getElementById('box');
       const ball = document.getElementById('ball');
       const rect = box.getBoundingClientRect();
 
       ws.onmessage = (webSocketMessage) => {
         const messageBody = JSON.parse(webSocketMessage.data);
-        let cursor = document.getElementById(messageBody.sender);
-        if (!cursor) cursor = makeCursor(messageBody);
-        cursor.style.transform = `translate(${messageBody.x + 1}px, ${
-          messageBody.y + 1
-        }px)`;
+        if (messageBody.tag === 'update') {
+          let cursor = document.getElementById(messageBody.sender);
+          if (!cursor)
+            cursor = makeCursor(messageBody.sender, messageBody.color);
+          cursor.style.transform = `translate(${messageBody.x + 1}px, ${
+            messageBody.y + 1
+          }px)`;
 
-        if (messageBody.hasBall) {
-          ball.style.transform = `translate(${messageBody.x}px, ${messageBody.y}px)`;
-          ball.style.border = `6px solid ${messageBody.color}`;
-        } else {
-          ball.style.border = null;
+          if (messageBody.hasBall) {
+            ball.style.transform = `translate(${messageBody.x}px, ${messageBody.y}px)`;
+            ball.style.border = `6px solid ${messageBody.color}`;
+          } else {
+            ball.style.border = null;
+          }
+        } else if (messageBody.tag === 'welcome') {
+          console.log(messageBody.data);
+          messageBody.data.forEach((cursorData, i) => {
+            let cursor = makeCursor(cursorData.id, cursorData.color);
+            cursor.style.transform = `translate(${cursorData.x + 1}px, ${
+              cursorData.y + 1
+            }px)`;
+          });
+        } else if (messageBody.tag === 'removal') {
+          const cursorToDelete = document.getElementById(messageBody.id);
+          cursorToDelete.remove();
         }
       };
 
@@ -86,14 +89,15 @@ function App() {
     init();
   }, []);
 
-  function makeCursor(messageBody) {
+  function makeCursor(id, color) {
     const cursor = document.createElement('div');
     cursor.className = 'cursor';
-    cursor.id = messageBody.sender;
+    cursor.id = id;
     cursor.innerHTML = `<svg height="16" width="16">
-        <polygon points="0,0 16,6 6,16" fill="${messageBody.color}" stroke='#000' />
+        <polygon points="0,0 16,6 6,16" fill="${color}" stroke='#000' />
     </svg>`;
     document.getElementById('box').appendChild(cursor);
+    return cursor;
   }
 
   return (
